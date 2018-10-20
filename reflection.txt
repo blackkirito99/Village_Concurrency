@@ -1,0 +1,29 @@
+I have add 3 more class to make this simulation working:
+1. Operator	-	move cable car up and down when it is empty
+2. Train		-	move group from source to destination
+3. Village	-	host group and has state of occupied or unoccupied
+4. Cablecar	-	carry group and has state of its current position (in valley or in termius) and occupied or unoccupied
+and I also modify Group class to save additional information about group's position (in or not in valley) 
+and group's tour progress.
+
+In implementation, I make several assumptions:
+1. Cablecar, just like village, can only have one group stay inside (including valley, terminus and on the way) to simplify problem
+2. Because trains only transfer groups in one direction, I make Train Threads sleep for journey time after delivering a group to simulate its time to come back.
+
+The biggest problem I faced in the implementation is that how to prevent consumer from removing group that just arrive terminus,
+and vice versa, prevent first train from transferring group that have already finish the tour.
+I add a parameter for depart() method in Cablecar to distinct call from two different Threads (Consumer and first train).
+Then the depart() method is acted differently based on inputs, and so I solve this biggest problem.
+
+I have testing my program by varying the time assumption and number of villages. 
+All of them works fine except when MAX_ARRIVE_INTERVAL is much smaller than MAX_DEPART_INTERVAL.
+Sometime program become nonresponding very early (~group 30), while other time, it stop after group 100. 
+I run the software several times and print out some debug messages.
+I found out that this is because of dead lock.
+When producer produces groups much faster than consumer, sooner or later, all villages and trains will be full.
+At this period of time, if a new group takes cable car up and tries to depart from it, because all village is full, it cannot do it,
+while group from last train cannot move to the cable car neither, and thus this is a deadlock.
+There are a lot of way to solve this problem, however, to prevent breaking my assumption at first point, I add group count for how many groups in current in this place.
+If the number of group in the attraction is more than number of villages, I simply let producer to wait until some group will the attraction.
+
+From this assignment, I learn that Concurrency program is much more complicated to test than non-Concurrency program.
